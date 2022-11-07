@@ -77,7 +77,7 @@ void init (void)
 glutInitDisplayMode (GLUT_SINGLE | GLUT_RGB);
 glutInitWindowPosition (100, 50);
 glutInitWindowSize (winW, winH);
-glutCreateWindow ("My Paint App");  
+glutCreateWindow ("123 Paints (Right Click Please)");  
 glClearColor (1.0, 1.0, 1.0, 0.0);
 glMatrixMode (GL_PROJECTION);
 gluOrtho2D (0.0, 1200.0, 0.0, 700.0);

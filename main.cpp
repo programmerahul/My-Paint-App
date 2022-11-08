@@ -149,6 +149,20 @@ if (!compareColor(interiorColor,fillColor) && compareColor(interiorColor,prevCol
 glPointSize (thickness);
 glFlush();
 }
+void floodFill (GLint x, GLint y, myColor fillColor){
+myColor interiorColor;
+glPointSize (1);
+interiorColor=getPixelColor (x, y);
+if (!compareColor(interiorColor,fillColor)) {
+    setPixel (x, y);
+    floodFill (x + 1, y , fillColor);
+    floodFill (x - 1, y , fillColor);
+    floodFill (x , y + 1, fillColor);
+    floodFill (x , y - 1, fillColor);
+}
+glPointSize (thickness);
+glFlush();
+}
 void plotRectangle(scrPt p1,scrPt p2){
     scrPt p3,p4;
     p3.x=p1.x;
@@ -174,8 +188,7 @@ void plotFilledRect(scrPt p1,scrPt p2){
     }else{
         y=p1.y-thickness;
     }
-    myColor prevColor=getPixelColor(x,y);
-    boundaryFill(x,y,currentColor,prevColor);
+    floodFill(x,y,currentColor);
     glFlush();
 }
 
@@ -216,8 +229,7 @@ void plotFilledCircle(scrPt p1,scrPt p2){
     plotCircle(p1,p2);
     GLint x=p1.x;
     GLint y=p1.y;
-    myColor prevColor=getPixelColor(x,y);
-    boundaryFill(x,y,currentColor,prevColor);
+    floodFill(x,y,currentColor);
     glFlush();
 }
 GLint firstx=0;
@@ -317,13 +329,6 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==5){
     }
 }
 if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==6){
-    firstx=xMouse;
-    firsty=winH-yMouse;
-    myColor prevColor=getPixelColor(firstx,firsty);
-    boundaryFill(firstx,firsty,currentColor,prevColor);
-    glFlush();
-}
-if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==7){
     if(cnt==0){
          firstx=xMouse;
         firsty=winH-yMouse;
@@ -340,6 +345,20 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==7){
         firsty=p2.y;
     }
 }
+if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==7){
+    firstx=xMouse;
+    firsty=winH-yMouse;
+    myColor prevColor=getPixelColor(firstx,firsty);
+    boundaryFill(firstx,firsty,currentColor,prevColor);
+    glFlush();
+}
+if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==8){
+    firstx=xMouse;
+    firsty=winH-yMouse;
+    floodFill(firstx,firsty,currentColor);
+    glFlush();
+}
+
 }
 void menuBarAction (GLint selectedOption){
     currentOption=selectedOption;
@@ -388,8 +407,9 @@ void createMenu(){
     glutAddMenuEntry ("Filled Rectangle", 3);
     glutAddMenuEntry ("Circle", 4);
     glutAddMenuEntry ("Filled Circle", 5);
-    glutAddMenuEntry ("Fill", 6);
-    glutAddMenuEntry ("PolyLine", 7);
+    glutAddMenuEntry ("PolyLine", 6);
+    glutAddMenuEntry ("Boundary Fill", 7);
+    glutAddMenuEntry ("Flood Fill", 8);
     glutAddSubMenu ("Color", sumMenu1);
     glutAddSubMenu ("Thickness", sumMenu2);
     glutAttachMenu (GLUT_RIGHT_BUTTON);

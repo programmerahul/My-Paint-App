@@ -1,5 +1,6 @@
 #include <GL/glut.h>
 #include<cmath>
+#include<iostream>
 using namespace std;
 
 GLint winW=1200,winH=700;
@@ -192,8 +193,6 @@ void plotFilledRect(scrPt p1,scrPt p2){
     glFlush();
 }
 
-
-
 void plotCircle(scrPt p1,scrPt p2){
     int radius=sqrt((p1.x-p2.x)*(p1.x-p2.x)+(p1.y-p2.y)*(p1.y-p2.y));
     GLint p = 1 - radius;
@@ -238,8 +237,26 @@ GLint secondx=0;
 GLint secondy=0;
 int currentOption=-1;
 int cnt=0;
-void onMouseClick (GLint button, GLint action, GLint xMouse, GLint yMouse)
-{
+int findObject(GLint x,GLint y){
+    int wid=winW/9;
+    x/=wid;
+    int dh=35;
+    if(y>winH-dh){
+        return x;
+    }
+    return -1;
+}
+void onMouseClick (GLint button, GLint action, GLint xMouse, GLint yMouse){
+    if(button == GLUT_LEFT_BUTTON && action == GLUT_DOWN){
+        int object=findObject(xMouse,winH-yMouse);
+        if(object!=-1){
+        currentOption=object;
+        cnt=0;
+        object=-1;
+        return;
+        }
+    }
+   
 if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==0){
     firstx=xMouse;
     firsty=winH-yMouse;
@@ -414,10 +431,130 @@ void createMenu(){
     glutAddSubMenu ("Thickness", sumMenu2);
     glutAttachMenu (GLUT_RIGHT_BUTTON);
 }
+ int objectNo=0;
+void createBar(){
+    thickness=2;
+    glPointSize(thickness);
+    scrPt p1,p2;
+    p1.x=0;
+    p2.x=winW;
+    int dh=35;
+    p1.y=winH-dh;
+    p2.y=winH-dh;
+    plotLine(p1,p2);
+    int wid=winW/9;
+    for(int i=wid;i<=winW;i+=wid){
+        if(objectNo==0){
+            scrPt p;
+            p.x=i-(wid/2);
+            p.y=winH-dh/2;
+            plotPoint(p);
+            glFlush();
+        }else if(objectNo==1){
+            scrPt p1,p2;
+            p1.x=i-(2*wid/3);
+            p1.y=winH-dh/3;
+            p2.x=i-(wid/3);
+            p2.y=winH-(2*dh/3);
+            plotLine(p1,p2);
+             glFlush();
+        }
+        else if(objectNo==2){
+            scrPt p1,p2;
+            p1.x=i-(2*wid/3);
+            p1.y=winH-dh/3;
+            p2.x=i-(wid/3);
+            p2.y=winH-(2*dh/3);
+            plotRectangle(p1,p2);
+             glFlush();
+        }
+        else if(objectNo==3){
+            scrPt p1,p2;
+            p1.x=i-(2*wid/3);
+            p1.y=winH-dh/3;
+            p2.x=i-(wid/3);
+            p2.y=winH-(2*dh/3);
+            plotFilledRect(p1,p2);
+            glFlush();
+        }
+        else if(objectNo==4){
+            scrPt p;
+            p.x=i-(wid/2);
+            p.y=winH-dh/2;
+            scrPt p1;
+            p1.x=i-(wid/2);;
+            p1.y=winH-dh/4;
+            plotCircle(p,p1);
+            glFlush();
+        }
+        else if(objectNo==5){
+             scrPt p;
+            p.x=i-(wid/2);
+            p.y=winH-dh/2;
+            scrPt p1;
+            p1.x=i-(wid/2);;
+            p1.y=winH-dh/4;
+            plotFilledCircle(p,p1);
+            glFlush();
+        }
+        else if(objectNo==6){
+            scrPt p1,p2;
+              p2.y=winH-(dh/4);
+              p2.x=i-(2*wid/3);
+              p1.y=winH-(dh/2);
+              p1.x=i-(wid/2);
+              plotLine(p1,p2);
+              glFlush();
+             p2.y=winH-(3*dh/4);
+            plotLine(p1,p2);
+             glFlush();
+        }
+        else if(objectNo==7){
+              scrPt p1,p2;
+            p1.x=i-(2*wid/3);
+            p1.y=winH-dh/2;
+            p2.x=i-(wid/2);
+            p2.y=winH-(dh/4);
+            plotRectangle(p1,p2);
+            p1.y=winH-3*dh/4;
+            plotRectangle(p1,p2);
+             glFlush();
+        }
+        else if(objectNo==8){
+              scrPt p1,p2;
+              p2.y=winH-(dh/4);
+              p2.x=i-(2*wid/3);
+              p1.y=winH-(dh/4);
+              p1.x=i-(wid/2);
+              plotLine(p1,p2);
+              glFlush();
+             p1.y=winH-dh/2;
+             p2.y=winH-dh/2;
+             plotLine(p1,p2);
+             glFlush();
+             p2.y=winH-(dh/4);
+             p1.y=winH-3*dh/4;
+            p1.x=i-(2*wid/3);
+            plotLine(p1,p2);
+             glFlush();
+        }
+        p1.x=p2.x=i;
+        p1.y=winH;
+        p2.y=winH-dh;
+        plotLine(p1,p2);
+        objectNo++;
+    }
+
+    glFlush();
+    thickness=1;
+    glPointSize(thickness);
+    
+}
 int main (int argc, char** argv)
 {
 glutInit (&argc, argv);
 init ();
+createBar();
 createMenu();
 glutMouseFunc(onMouseClick);
 commit();

@@ -448,7 +448,11 @@ void createBar(){
             scrPt p;
             p.x=i-(wid/2);
             p.y=winH-dh/2;
+            thickness=4;
+            glPointSize(thickness);
             plotPoint(p);
+            thickness=1;
+            glPointSize(thickness);
             glFlush();
         }else if(objectNo==1){
             scrPt p1,p2;

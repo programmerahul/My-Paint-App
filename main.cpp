@@ -1,6 +1,7 @@
 #include <GL/glut.h>
 #include<cmath>
 #include<iostream>
+#include<vector>
 using namespace std;
 
 GLint winW=1200,winH=700;
@@ -237,202 +238,86 @@ GLint secondx=0;
 GLint secondy=0;
 int currentOption=-1;
 int cnt=0;
-int findObject(GLint x,GLint y){
-    int wid=winW/9;
-    x/=wid;
-    int dh=35;
-    if(y>winH-dh){
-        return x;
-    }
-    return -1;
+int x_max;
+int y_max;
+int x_min;
+int y_min;
+const int INSIDE = 0; 
+const int LEFT = 1;
+const int RIGHT = 2;
+const int BOTTOM = 4; 
+const int TOP = 8;
+int computeCode(double x, double y)
+{
+    int code = INSIDE;
+    if (x < x_min) 
+        code |= LEFT;
+    else if (x > x_max)
+        code |= RIGHT;
+    if (y < y_min) 
+        code |= BOTTOM;
+    else if (y > y_max) 
+        code |= TOP;
+    return code;
 }
-void onMouseClick (GLint button, GLint action, GLint xMouse, GLint yMouse){
-    if(button == GLUT_LEFT_BUTTON && action == GLUT_DOWN){
-        int object=findObject(xMouse,winH-yMouse);
-        if(object!=-1){
-        currentOption=object;
-        cnt=0;
-        object=-1;
-        return;
+
+void cohenSutherlandClip(double x1, double y1,double x2, double y2,vector<pair<double,double>>&myLines){
+    int code1 = computeCode(x1, y1);
+    int code2 = computeCode(x2, y2);
+    bool accept = false;
+    while (true) {
+        if ((code1 == 0) && (code2 == 0)) {
+            accept = true;
+            break;
+        }
+        else if (code1 & code2) {
+            break;
+        }
+        else {
+            int code_out;
+            double x, y;
+            if (code1 != 0)
+                code_out = code1;
+            else
+                code_out = code2;
+            if (code_out & TOP) {
+                x = x1 + (x2 - x1) * (y_max - y1) / (y2 - y1);
+                y = y_max;
+            }
+            else if (code_out & BOTTOM) {
+                x = x1 + (x2 - x1) * (y_min - y1) / (y2 - y1);
+                y = y_min;
+            }
+            else if (code_out & RIGHT) {
+                y = y1 + (y2 - y1) * (x_max - x1) / (x2 - x1);
+                x = x_max;
+            }
+            else if (code_out & LEFT) {
+                y = y1 + (y2 - y1) * (x_min - x1) / (x2 - x1);
+                x = x_min;
+            }
+            if (code_out == code1) {
+                x1 = x;
+                y1 = y;
+                code1 = computeCode(x1, y1);
+            }
+            else {
+                x2 = x;
+                y2 = y;
+                code2 = computeCode(x2, y2);
+            }
         }
     }
-   
-if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==0){
-    firstx=xMouse;
-    firsty=winH-yMouse;
-    scrPt p;
-    p.x=firstx;
-    p.y=firsty;
-    plotPoint(p);
-}
-if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==1){
-    if(cnt==0){
-         firstx=xMouse;
-        firsty=winH-yMouse;
-        cnt++;
-    }else{
-         scrPt p1;
-        p1.x=firstx;
-        p1.y=firsty;
-        scrPt p2;
-        p2.x=xMouse;
-        p2.y=winH-yMouse;
-        plotLine(p1,p2);
-        cnt=0;
+    if (accept) {
+             myLines.push_back({x1,y1});
+             myLines.push_back({x2,y2});
     }
-}
-if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==2){
-    if(cnt==0){
-         firstx=xMouse;
-        firsty=winH-yMouse;
-        cnt++;
-    }else{
-         scrPt p1;
-        p1.x=firstx;
-        p1.y=firsty;
-        scrPt p2;
-        p2.x=xMouse;
-        p2.y=winH-yMouse;
-        plotRectangle(p1,p2);
-        cnt=0;
-    }
-}
-if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==3){
-    if(cnt==0){
-         firstx=xMouse;
-        firsty=winH-yMouse;
-        cnt++;
-    }else{
-         scrPt p1;
-        p1.x=firstx;
-        p1.y=firsty;
-        scrPt p2;
-        p2.x=xMouse;
-        p2.y=winH-yMouse;
-        plotFilledRect(p1,p2);
-        cnt=0;
-    }
-}
-if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==4){
-    if(cnt==0){
-         firstx=xMouse;
-        firsty=winH-yMouse;
-        cnt++;
-    }else{
-         scrPt p1;
-        p1.x=firstx;
-        p1.y=firsty;
-        scrPt p2;
-        p2.x=xMouse;
-        p2.y=winH-yMouse;
-        plotCircle(p1,p2);
-        cnt=0;
-    }
-}
-if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==5){
-    if(cnt==0){
-         firstx=xMouse;
-        firsty=winH-yMouse;
-        cnt++;
-    }else{
-         scrPt p1;
-        p1.x=firstx;
-        p1.y=firsty;
-        scrPt p2;
-        p2.x=xMouse;
-        p2.y=winH-yMouse;
-        plotFilledCircle(p1,p2);
-        cnt=0;
-    }
-}
-if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==6){
-    if(cnt==0){
-         firstx=xMouse;
-        firsty=winH-yMouse;
-        cnt++;
-    }else{
-         scrPt p1;
-        p1.x=firstx;
-        p1.y=firsty;
-        scrPt p2;
-        p2.x=xMouse;
-        p2.y=winH-yMouse;
-        plotLine(p1,p2);
-        firstx=p2.x;
-        firsty=p2.y;
-    }
-}
-if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==7){
-    firstx=xMouse;
-    firsty=winH-yMouse;
-    myColor prevColor=getPixelColor(firstx,firsty);
-    boundaryFill(firstx,firsty,currentColor,prevColor);
-    glFlush();
-}
-if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==8){
-    firstx=xMouse;
-    firsty=winH-yMouse;
-    floodFill(firstx,firsty,currentColor);
-    glFlush();
 }
 
-}
-void menuBarAction (GLint selectedOption){
-    currentOption=selectedOption;
-    cnt=0;
-    glutPostRedisplay ();
-}
-
-void colorSubMenu (GLint colorOption)
-{
-    currentColor=getRgb(colorOption);
-    glColor3f (currentColor.r, currentColor.g, currentColor.b);
-    glutPostRedisplay ( );
-}
-void thicknessSubMenu (GLint thicknessOption)
-{
-    thickness=thicknessOption;
-    glPointSize (thickness);
-    glutPostRedisplay ( );
-}
-void createMenu(){
-    GLint sumMenu1,sumMenu2;
-    sumMenu1 = glutCreateMenu (colorSubMenu);
-    glutAddMenuEntry ("RED", RED);
-    glutAddMenuEntry ("GREEN",GREEN);
-    glutAddMenuEntry ("BLUE", BLUE);
-    glutAddMenuEntry ("CYAN", CYAN);
-    glutAddMenuEntry ("MAGENTA", MAGENTA);
-    glutAddMenuEntry ("YELLOW", YELLOW);
-    glutAddMenuEntry ("WHITE", WHITE);
-    glutAddMenuEntry ("BLACK", BLACK);
-
-    sumMenu2 = glutCreateMenu (thicknessSubMenu);
-    glutAddMenuEntry ("1", 1);
-    glutAddMenuEntry ("2", 2);
-    glutAddMenuEntry ("3", 3);
-    glutAddMenuEntry ("4", 4);
-    glutAddMenuEntry ("5", 5);
-    glutAddMenuEntry ("6", 6);
-    glutAddMenuEntry ("7", 7);
-    glutAddMenuEntry ("8", 8);
-
-    glutCreateMenu(menuBarAction);
-    glutAddMenuEntry ("Point", 0);
-    glutAddMenuEntry ("Line", 1);
-    glutAddMenuEntry ("Rectangle", 2);
-    glutAddMenuEntry ("Filled Rectangle", 3);
-    glutAddMenuEntry ("Circle", 4);
-    glutAddMenuEntry ("Filled Circle", 5);
-    glutAddMenuEntry ("PolyLine", 6);
-    glutAddMenuEntry ("Boundary Fill", 7);
-    glutAddMenuEntry ("Flood Fill", 8);
-    glutAddSubMenu ("Color", sumMenu1);
-    glutAddSubMenu ("Thickness", sumMenu2);
-    glutAttachMenu (GLUT_RIGHT_BUTTON);
-}
+vector<pair<double,double>> inputLines;
  int objectNo=0;
 void createBar(){
+    glColor3f (0.0,1.0,0.0);
     thickness=2;
     glPointSize(thickness);
     scrPt p1,p2;
@@ -541,6 +426,8 @@ void createBar(){
             p1.x=i-(2*wid/3);
             plotLine(p1,p2);
              glFlush();
+        }else{
+            objectNo=0;
         }
         p1.x=p2.x=i;
         p1.y=winH;
@@ -552,8 +439,250 @@ void createBar(){
     glFlush();
     thickness=1;
     glPointSize(thickness);
-    
+    glColor3f (currentColor.r, currentColor.g, currentColor.b);
 }
+int findObject(GLint x,GLint y){
+    int wid=winW/9;
+    x/=wid;
+    int dh=35;
+    if(y>winH-dh){
+        return x;
+    }
+    return -1;
+}
+void onMouseClick (GLint button, GLint action, GLint xMouse, GLint yMouse){
+    if(button == GLUT_LEFT_BUTTON && action == GLUT_DOWN){
+        int object=findObject(xMouse,winH-yMouse);
+        if(object!=-1){
+        currentOption=object;
+        cnt=0;
+        object=-1;
+        return;
+        }
+    }
+   
+if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==0){
+    firstx=xMouse;
+    firsty=winH-yMouse;
+    scrPt p;
+    p.x=firstx;
+    p.y=firsty;
+    plotPoint(p);
+}
+if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==1){
+    if(cnt==0){
+         firstx=xMouse;
+        firsty=winH-yMouse;
+        cnt++;
+    }else{
+         scrPt p1;
+        p1.x=firstx;
+        p1.y=firsty;
+        scrPt p2;
+        p2.x=xMouse;
+        p2.y=winH-yMouse;
+        plotLine(p1,p2);
+        inputLines.push_back({firstx,firsty});
+        inputLines.push_back({p2.x,p2.y});
+        cnt=0;
+    }
+}
+if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==2){
+    if(cnt==0){
+         firstx=xMouse;
+        firsty=winH-yMouse;
+        cnt++;
+    }else{
+         scrPt p1;
+        p1.x=firstx;
+        p1.y=firsty;
+        scrPt p2;
+        p2.x=xMouse;
+        p2.y=winH-yMouse;
+        plotRectangle(p1,p2);
+        cnt=0;
+    }
+}
+if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==3){
+    if(cnt==0){
+         firstx=xMouse;
+        firsty=winH-yMouse;
+        cnt++;
+    }else{
+         scrPt p1;
+        p1.x=firstx;
+        p1.y=firsty;
+        scrPt p2;
+        p2.x=xMouse;
+        p2.y=winH-yMouse;
+        plotFilledRect(p1,p2);
+        cnt=0;
+    }
+}
+if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==4){
+    if(cnt==0){
+         firstx=xMouse;
+        firsty=winH-yMouse;
+        cnt++;
+    }else{
+         scrPt p1;
+        p1.x=firstx;
+        p1.y=firsty;
+        scrPt p2;
+        p2.x=xMouse;
+        p2.y=winH-yMouse;
+        plotCircle(p1,p2);
+        cnt=0;
+    }
+}
+if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==5){
+    if(cnt==0){
+         firstx=xMouse;
+        firsty=winH-yMouse;
+        cnt++;
+    }else{
+         scrPt p1;
+        p1.x=firstx;
+        p1.y=firsty;
+        scrPt p2;
+        p2.x=xMouse;
+        p2.y=winH-yMouse;
+        plotFilledCircle(p1,p2);
+        cnt=0;
+    }
+}
+if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==6){
+    if(cnt==0){
+         firstx=xMouse;
+        firsty=winH-yMouse;
+        cnt++;
+    }else{
+         scrPt p1;
+        p1.x=firstx;
+        p1.y=firsty;
+        scrPt p2;
+        p2.x=xMouse;
+        p2.y=winH-yMouse;
+        plotLine(p1,p2);
+        firstx=p2.x;
+        firsty=p2.y;
+    }
+}
+if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==7){
+    firstx=xMouse;
+    firsty=winH-yMouse;
+    myColor prevColor=getPixelColor(firstx,firsty);
+    boundaryFill(firstx,firsty,currentColor,prevColor);
+    glFlush();
+}
+if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==8){
+    firstx=xMouse;
+    firsty=winH-yMouse;
+    floodFill(firstx,firsty,currentColor);
+    glFlush();
+}
+if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==9){
+   if(cnt==0){
+         firstx=xMouse;
+        firsty=winH-yMouse;
+        cnt++;
+    }else{
+        int secondx=xMouse;
+        int secondy=winH-yMouse;
+        if(firstx<secondx){
+            x_min=firstx;
+            x_max=secondx;
+        }else{
+            x_min=secondx;
+            x_max=firstx;
+        }
+        if(firsty<secondy){
+            y_min=firsty;
+            y_max=secondy;
+        }else{
+            y_min=secondy;
+            y_max=firsty;
+        }
+        vector<pair<double,double>> linesAfterClip,temp;
+        for(int i=0;i<inputLines.size();i+=2){
+            cohenSutherlandClip(inputLines[i].first,inputLines[i].second,
+            inputLines[i+1].first,inputLines[i+1].second,linesAfterClip);
+        }
+        glClear (GL_COLOR_BUFFER_BIT);
+        glFlush();
+        createBar();
+        glFlush();
+        for(int i=0;i<linesAfterClip.size();i+=2){
+            scrPt p1,p2;
+            p1.x=linesAfterClip[i].first;
+            p1.y=linesAfterClip[i].second;
+            p2.x=linesAfterClip[i+1].first;
+            p2.y=linesAfterClip[i+1].second;
+            plotLine(p1,p2);
+        }
+        inputLines=linesAfterClip;
+        linesAfterClip=temp;
+        cnt=0;
+    }
+}
+}
+void menuBarAction (GLint selectedOption){
+    currentOption=selectedOption;
+    cnt=0;
+    glutPostRedisplay ();
+}
+
+void colorSubMenu (GLint colorOption)
+{
+    currentColor=getRgb(colorOption);
+    glColor3f (currentColor.r, currentColor.g, currentColor.b);
+    glutPostRedisplay ( );
+}
+void thicknessSubMenu (GLint thicknessOption)
+{
+    thickness=thicknessOption;
+    glPointSize (thickness);
+    glutPostRedisplay ( );
+}
+void createMenu(){
+    GLint sumMenu1,sumMenu2;
+    sumMenu1 = glutCreateMenu (colorSubMenu);
+    glutAddMenuEntry ("RED", RED);
+    glutAddMenuEntry ("GREEN",GREEN);
+    glutAddMenuEntry ("BLUE", BLUE);
+    glutAddMenuEntry ("CYAN", CYAN);
+    glutAddMenuEntry ("MAGENTA", MAGENTA);
+    glutAddMenuEntry ("YELLOW", YELLOW);
+    glutAddMenuEntry ("WHITE", WHITE);
+    glutAddMenuEntry ("BLACK", BLACK);
+
+    sumMenu2 = glutCreateMenu (thicknessSubMenu);
+    glutAddMenuEntry ("1", 1);
+    glutAddMenuEntry ("2", 2);
+    glutAddMenuEntry ("3", 3);
+    glutAddMenuEntry ("4", 4);
+    glutAddMenuEntry ("5", 5);
+    glutAddMenuEntry ("6", 6);
+    glutAddMenuEntry ("7", 7);
+    glutAddMenuEntry ("8", 8);
+
+    glutCreateMenu(menuBarAction);
+    glutAddMenuEntry ("Point", 0);
+    glutAddMenuEntry ("Line", 1);
+    glutAddMenuEntry ("Rectangle", 2);
+    glutAddMenuEntry ("Filled Rectangle", 3);
+    glutAddMenuEntry ("Circle", 4);
+    glutAddMenuEntry ("Filled Circle", 5);
+    glutAddMenuEntry ("PolyLine", 6);
+    glutAddMenuEntry ("Boundary Fill", 7);
+    glutAddMenuEntry ("Flood Fill", 8);
+    glutAddMenuEntry ("Clipping", 9);
+    glutAddSubMenu ("Color", sumMenu1);
+    glutAddSubMenu ("Thickness", sumMenu2);
+    glutAttachMenu (GLUT_RIGHT_BUTTON);
+}
+
+
 int main (int argc, char** argv)
 {
 glutInit (&argc, argv);

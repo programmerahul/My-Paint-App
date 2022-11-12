@@ -4,7 +4,7 @@
 #include<vector>
 using namespace std;
 
-GLint winW=1200,winH=700;
+const GLint winW=1200,winH=700;
 class scrPt {
 public:
 GLint x, y;
@@ -177,7 +177,10 @@ void plotRectangle(scrPt p1,scrPt p2){
     plotLine(p2,p4);
     glFlush();
 }
-void plotFilledRect(scrPt p1,scrPt p2){
+void filledRectangleInbuilt(GLint x1,GLint y1,GLint x2,GLint y2){
+    glRecti(x1,y1,x2,y2);
+}
+void plotfilledRectangleInbuilt(scrPt p1,scrPt p2){
     plotRectangle(p1,p2);
     GLint x,y;
     if(p2.x>p1.x){
@@ -313,17 +316,32 @@ void cohenSutherlandClip(double x1, double y1,double x2, double y2,vector<pair<d
              myLines.push_back({x2,y2});
     }
 }
-
+int dh=35;//top bar width
+vector<vector<bool>> topBar(winW+1,vector<bool>(dh+1,0));
 vector<pair<double,double>> inputLines;
- int objectNo=0;
+bool isCreated=0;
 void createBar(){
+    int objectNo=0;
     glColor3f (0.0,1.0,0.0);
-    thickness=2;
+     if(isCreated){
+        glPointSize(2);
+       for(int i=0;i<winW;i++){
+        for(int j=winH-dh;j<winH;j++){
+            if(topBar[i][j-(winH-dh)])
+                setPixel(i,j);
+        }
+       }
+    glFlush();
+    glPointSize(thickness);
+    glColor3f (currentColor.r, currentColor.g, currentColor.b);
+    return;
+    }
+     thickness=2;
     glPointSize(thickness);
     scrPt p1,p2;
     p1.x=0;
     p2.x=winW;
-    int dh=35;
+    
     p1.y=winH-dh;
     p2.y=winH-dh;
     plotLine(p1,p2);
@@ -363,7 +381,7 @@ void createBar(){
             p1.y=winH-dh/3;
             p2.x=i-(wid/3);
             p2.y=winH-(2*dh/3);
-            plotFilledRect(p1,p2);
+            filledRectangleInbuilt(p1.x,p1.y,p2.x,p2.y);
             glFlush();
         }
         else if(objectNo==4){
@@ -435,11 +453,22 @@ void createBar(){
         plotLine(p1,p2);
         objectNo++;
     }
-
+    
     glFlush();
     thickness=1;
     glPointSize(thickness);
     glColor3f (currentColor.r, currentColor.g, currentColor.b);
+     for(int i=0;i<winW;i++){
+        for(int j=winH-dh;j<winH;j++){
+            myColor color=getPixelColor(i,j);
+            if(color.r==0){
+                topBar[i][j-(winH-dh)]=1;
+            }else{
+                topBar[i][j-(winH-dh)]=0;
+            }
+        }
+       }
+    isCreated=1;
 }
 int findObject(GLint x,GLint y){
     int wid=winW/9;
@@ -515,7 +544,7 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==3){
         scrPt p2;
         p2.x=xMouse;
         p2.y=winH-yMouse;
-        plotFilledRect(p1,p2);
+        plotfilledRectangleInbuilt(p1,p2);
         cnt=0;
     }
 }
@@ -587,6 +616,7 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==9){
         firsty=winH-yMouse;
         cnt++;
     }else{
+       
         int secondx=xMouse;
         int secondy=winH-yMouse;
         if(firstx<secondx){
@@ -604,6 +634,7 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==9){
             y_max=firsty;
         }
         vector<pair<double,double>> linesAfterClip,temp;
+       
         for(int i=0;i<inputLines.size();i+=2){
             cohenSutherlandClip(inputLines[i].first,inputLines[i].second,
             inputLines[i+1].first,inputLines[i+1].second,linesAfterClip);
@@ -612,6 +643,9 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==9){
         glFlush();
         createBar();
         glFlush();
+         glColor3f (currentColor.r, currentColor.g, currentColor.b);
+    glutPostRedisplay ( );
+    
         for(int i=0;i<linesAfterClip.size();i+=2){
             scrPt p1,p2;
             p1.x=linesAfterClip[i].first;

@@ -177,10 +177,7 @@ void plotRectangle(scrPt p1,scrPt p2){
     plotLine(p2,p4);
     glFlush();
 }
-void filledRectangleInbuilt(GLint x1,GLint y1,GLint x2,GLint y2){
-    glRecti(x1,y1,x2,y2);
-}
-void plotfilledRectangleInbuilt(scrPt p1,scrPt p2){
+void plotFilledRectangle(scrPt p1,scrPt p2){
     plotRectangle(p1,p2);
     GLint x,y;
     if(p2.x>p1.x){
@@ -324,7 +321,7 @@ void createBar(){
     int objectNo=0;
     glColor3f (0.0,1.0,0.0);
      if(isCreated){
-        glPointSize(2);
+        glPointSize(1);
        for(int i=0;i<winW;i++){
         for(int j=winH-dh;j<winH;j++){
             if(topBar[i][j-(winH-dh)])
@@ -336,7 +333,7 @@ void createBar(){
     glColor3f (currentColor.r, currentColor.g, currentColor.b);
     return;
     }
-     thickness=2;
+     thickness=1;
     glPointSize(thickness);
     scrPt p1,p2;
     p1.x=0;
@@ -381,7 +378,7 @@ void createBar(){
             p1.y=winH-dh/3;
             p2.x=i-(wid/3);
             p2.y=winH-(2*dh/3);
-            filledRectangleInbuilt(p1.x,p1.y,p2.x,p2.y);
+            plotFilledRectangle(p1,p2);
             glFlush();
         }
         else if(objectNo==4){
@@ -544,7 +541,7 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==3){
         scrPt p2;
         p2.x=xMouse;
         p2.y=winH-yMouse;
-        plotfilledRectangleInbuilt(p1,p2);
+        plotFilledRectangle(p1,p2);
         cnt=0;
     }
 }

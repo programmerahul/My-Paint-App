@@ -3,7 +3,7 @@
 #include<iostream>
 #include<vector>
 using namespace std;
-
+void timer(int);
 const GLint winW=1200,winH=700;
 class scrPt {
 public:
@@ -193,7 +193,6 @@ void plotFilledRectangle(scrPt p1,scrPt p2){
     floodFill(x,y,currentColor);
     glFlush();
 }
-
 void plotCircle(scrPt p1,scrPt p2){
     int radius=sqrt((p1.x-p2.x)*(p1.x-p2.x)+(p1.y-p2.y)*(p1.y-p2.y));
     GLint p = 1 - radius;
@@ -236,12 +235,17 @@ GLint firstx=0;
 GLint firsty=0;
 GLint secondx=0;
 GLint secondy=0;
+GLint startx=0;
+GLint starty=0;
+GLint endx=0;
+GLint endy=0;
 int currentOption=-1;
 int cnt=0;
 int x_max;
 int y_max;
 int x_min;
 int y_min;
+bool halt=1;
 const int INSIDE = 0; 
 const int LEFT = 1;
 const int RIGHT = 2;
@@ -476,6 +480,11 @@ int findObject(GLint x,GLint y){
     }
     return -1;
 }
+bool directionOfObject=1;
+void animate(){
+    halt=0;
+    glutTimerFunc(0,timer,0);
+}
 void onMouseClick (GLint button, GLint action, GLint xMouse, GLint yMouse){
     if(button == GLUT_LEFT_BUTTON && action == GLUT_DOWN){
         int object=findObject(xMouse,winH-yMouse);
@@ -656,10 +665,35 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==9){
         cnt=0;
     }
 }
+if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==10){
+     if(cnt==0){
+         firstx=xMouse;
+        firsty=winH-yMouse;
+        startx=firstx;
+        starty=firsty;
+        cnt++;
+    }else if(cnt==1){
+        scrPt p1;
+        p1.x=firstx;
+        p1.y=firsty;
+        scrPt p2;
+        p2.x=xMouse;
+        p2.y=winH-yMouse;
+        secondx=p2.x;
+        secondy=p2.y;
+        plotRectangle(p1,p2);
+        cnt++;
+    }else{
+        endx=xMouse;
+        endy=winH-yMouse;
+        animate();
+    }
+}
 }
 void menuBarAction (GLint selectedOption){
     currentOption=selectedOption;
     cnt=0;
+    halt=1;
     glutPostRedisplay ();
 }
 
@@ -708,6 +742,7 @@ void createMenu(){
     glutAddMenuEntry ("Boundary Fill", 7);
     glutAddMenuEntry ("Flood Fill", 8);
     glutAddMenuEntry ("Clipping", 9);
+    glutAddMenuEntry ("Animation",10);
     glutAddSubMenu ("Color", sumMenu1);
     glutAddSubMenu ("Thickness", sumMenu2);
     glutAttachMenu (GLUT_RIGHT_BUTTON);
@@ -722,4 +757,24 @@ createBar();
 createMenu();
 glutMouseFunc(onMouseClick);
 commit();
+}
+
+void timer(int){
+     glClear (GL_COLOR_BUFFER_BIT);
+    createBar();
+    if(directionOfObject && firstx<endx){
+        firstx+=5;secondx+=5;
+    }else if(directionOfObject)directionOfObject=!directionOfObject;
+    else if(!directionOfObject && firstx>startx){
+        firstx-=5;secondx-=5;
+    }else directionOfObject=!directionOfObject;
+    scrPt p1;
+    p1.x=firstx;
+    p1.y=firsty;
+    scrPt p2;
+    p2.x=secondx;
+    p2.y=secondy;
+    plotRectangle(p1,p2);
+    if(!halt)
+    glutTimerFunc(1000/60,timer,0);
 }

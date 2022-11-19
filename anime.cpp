@@ -23,13 +23,13 @@ void display(void){
     glColor3f (0.0, 0.4, 0.2);
     glClearColor (1.0, 1.0, 1.0, 0.0);
     glRecti (x, 200, x+50, 150);
-    glutSwapBuffers();
+    glFlush();
 }
 int main (int argc, char** argv)
 {
 glutInit (&argc, argv);
 
-glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB);
+glutInitDisplayMode (GLUT_SINGLE | GLUT_RGB);
 
 glutInitWindowPosition (50, 100);
 

@@ -5,6 +5,8 @@
 using namespace std;
 void timer(int);
 const GLint winW=1200,winH=700;
+
+void plotEverything(void);
 class scrPt {
 public:
 GLint x, y;
@@ -15,12 +17,10 @@ class myColor {
 };
 myColor currentColor;
 GLint thickness=1;
-enum COLOR_CODE
-{
+enum COLOR_CODE{
 	RED, GREEN, BLUE, CYAN, MAGENTA, YELLOW, WHITE, BLACK
 };
-myColor getRgb(int code)
-{   
+myColor getRgb(int code){   
     myColor color;
 	if (code == RED)
 	{
@@ -73,8 +73,7 @@ myColor getRgb(int code)
     return color;
 }
 
-void init (void)
-{
+void init (void){
 glutInitDisplayMode (GLUT_SINGLE | GLUT_RGB);
 glutInitWindowPosition (100, 50);
 glutInitWindowSize (winW, winH);
@@ -235,17 +234,24 @@ GLint firstx=0;
 GLint firsty=0;
 GLint secondx=0;
 GLint secondy=0;
-GLint startx=0;
-GLint starty=0;
-GLint endx=0;
-GLint endy=0;
+
+GLint animeRectx1=0;
+GLint animeRecty1=0;
+GLint animeRectx2=0;
+GLint animeRecty2=0;
+
+GLint startAnimex=0;
+GLint startAnimey=0;
+GLint endAnimex=0;
+GLint endAnimey=0;
 int currentOption=-1;
 int cnt=0;
+
+//clipping
 int x_max;
 int y_max;
 int x_min;
 int y_min;
-bool halt=1;
 const int INSIDE = 0; 
 const int LEFT = 1;
 const int RIGHT = 2;
@@ -317,9 +323,16 @@ void cohenSutherlandClip(double x1, double y1,double x2, double y2,vector<pair<d
              myLines.push_back({x2,y2});
     }
 }
+
 int dh=35;//top bar width
 vector<vector<bool>> topBar(winW+1,vector<bool>(dh+1,0));
+vector<pair<double,double>> inputPoints;
 vector<pair<double,double>> inputLines;
+vector<pair<double,double>> inputRect;
+vector<pair<double,double>> inputFilledRect;
+vector<pair<double,double>> inputCircle;
+vector<pair<double,double>> inputFilledCircle;
+
 bool isCreated=0;
 void createBar(){
     int objectNo=0;
@@ -482,7 +495,6 @@ int findObject(GLint x,GLint y){
 }
 bool directionOfObject=1;
 void animate(){
-    halt=0;
     glutTimerFunc(0,timer,0);
 }
 void onMouseClick (GLint button, GLint action, GLint xMouse, GLint yMouse){
@@ -502,6 +514,7 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==0){
     scrPt p;
     p.x=firstx;
     p.y=firsty;
+    inputPoints.push_back({p.x,p.y});
     plotPoint(p);
 }
 if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==1){
@@ -534,6 +547,8 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==2){
         scrPt p2;
         p2.x=xMouse;
         p2.y=winH-yMouse;
+        inputRect.push_back({p1.x,p1.y});
+        inputRect.push_back({p2.x,p2.y});
         plotRectangle(p1,p2);
         cnt=0;
     }
@@ -550,6 +565,8 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==3){
         scrPt p2;
         p2.x=xMouse;
         p2.y=winH-yMouse;
+        inputFilledRect.push_back({p1.x,p1.y});
+        inputFilledRect.push_back({p2.x,p2.y});
         plotFilledRectangle(p1,p2);
         cnt=0;
     }
@@ -566,6 +583,8 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==4){
         scrPt p2;
         p2.x=xMouse;
         p2.y=winH-yMouse;
+        inputCircle.push_back({p1.x,p1.y});
+        inputCircle.push_back({p2.x,p2.y});
         plotCircle(p1,p2);
         cnt=0;
     }
@@ -582,6 +601,8 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==5){
         scrPt p2;
         p2.x=xMouse;
         p2.y=winH-yMouse;
+        inputFilledCircle.push_back({p1.x,p1.y});
+        inputFilledCircle.push_back({p2.x,p2.y});
         plotFilledCircle(p1,p2);
         cnt=0;
     }
@@ -667,25 +688,25 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==9){
 }
 if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==10){
      if(cnt==0){
-         firstx=xMouse;
-        firsty=winH-yMouse;
-        startx=firstx;
-        starty=firsty;
+         animeRectx1=xMouse;
+        animeRecty1=winH-yMouse;
+        startAnimex=animeRectx1;
+        startAnimey=animeRecty1;
         cnt++;
     }else if(cnt==1){
         scrPt p1;
-        p1.x=firstx;
-        p1.y=firsty;
+        p1.x=animeRectx1;
+        p1.y=animeRecty1;
         scrPt p2;
         p2.x=xMouse;
         p2.y=winH-yMouse;
-        secondx=p2.x;
-        secondy=p2.y;
+        animeRectx2=p2.x;
+        animeRecty2=p2.y;
         plotRectangle(p1,p2);
         cnt++;
     }else{
-        endx=xMouse;
-        endy=winH-yMouse;
+        endAnimex=xMouse;
+        endAnimey=winH-yMouse;
         animate();
     }
 }
@@ -693,7 +714,6 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==10){
 void menuBarAction (GLint selectedOption){
     currentOption=selectedOption;
     cnt=0;
-    halt=1;
     glutPostRedisplay ();
 }
 
@@ -749,6 +769,7 @@ void createMenu(){
 }
 
 
+
 int main (int argc, char** argv)
 {
 glutInit (&argc, argv);
@@ -760,21 +781,68 @@ commit();
 }
 
 void timer(int){
-     glClear (GL_COLOR_BUFFER_BIT);
-    createBar();
-    if(directionOfObject && firstx<endx){
-        firstx+=5;secondx+=5;
+    glClear (GL_COLOR_BUFFER_BIT);
+    plotEverything();
+    if(directionOfObject && animeRectx1<endAnimex){
+        animeRectx1+=5;animeRectx2+=5;
     }else if(directionOfObject)directionOfObject=!directionOfObject;
-    else if(!directionOfObject && firstx>startx){
-        firstx-=5;secondx-=5;
+    else if(!directionOfObject && animeRectx1>startAnimex){
+        animeRectx1-=5;animeRectx2-=5;
     }else directionOfObject=!directionOfObject;
     scrPt p1;
-    p1.x=firstx;
-    p1.y=firsty;
+    p1.x=animeRectx1;
+    p1.y=animeRecty1;
     scrPt p2;
-    p2.x=secondx;
-    p2.y=secondy;
+    p2.x=animeRectx2;
+    p2.y=animeRecty2;
     plotRectangle(p1,p2);
-    if(!halt)
     glutTimerFunc(1000/60,timer,0);
+}
+
+void plotEverything(){
+    createBar();
+    for(int i=0;i<inputPoints.size();i++){
+        setPixel(inputPoints[i].first,inputPoints[i].second);
+    }
+    for(int i=0;i<inputLines.size();i+=2){
+        scrPt p1,p2;
+        p1.x=inputLines[i].first;
+        p1.y=inputLines[i].second;
+        p2.x=inputLines[i+1].first;
+        p2.y=inputLines[i+1].second;
+        plotLine(p1,p2);
+    }
+    for(int i=0;i<inputRect.size();i+=2){
+        scrPt p1,p2;
+        p1.x=inputRect[i].first;
+        p1.y=inputRect[i].second;
+        p2.x=inputRect[i+1].first;
+        p2.y=inputRect[i+1].second;
+        plotRectangle(p1,p2);
+    }
+    for(int i=0;i<inputFilledRect.size();i+=2){
+        scrPt p1,p2;
+        p1.x=inputFilledRect[i].first;
+        p1.y=inputFilledRect[i].second;
+        p2.x=inputFilledRect[i+1].first;
+        p2.y=inputFilledRect[i+1].second;
+        plotFilledRectangle(p1,p2);
+    }
+    for(int i=0;i<inputCircle.size();i+=2){
+        scrPt p1,p2;
+        p1.x=inputCircle[i].first;
+        p1.y=inputCircle[i].second;
+        p2.x=inputCircle[i+1].first;
+        p2.y=inputCircle[i+1].second;
+        plotCircle(p1,p2);
+    }
+    for(int i=0;i<inputFilledCircle.size();i+=2){
+        scrPt p1,p2;
+        p1.x=inputFilledCircle[i].first;
+        p1.y=inputFilledCircle[i].second;
+        p2.x=inputFilledCircle[i+1].first;
+        p2.y=inputFilledCircle[i+1].second;
+        plotFilledCircle(p1,p2);
+    }
+
 }

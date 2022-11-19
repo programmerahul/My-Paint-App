@@ -3,8 +3,11 @@
 #include<iostream>
 #include<vector>
 using namespace std;
-
+void timer(int);
 const GLint winW=1200,winH=700;
+
+void plotEverything(void);
+
 class scrPt {
 public:
 GLint x, y;
@@ -15,12 +18,10 @@ class myColor {
 };
 myColor currentColor;
 GLint thickness=1;
-enum COLOR_CODE
-{
+enum COLOR_CODE{
 	RED, GREEN, BLUE, CYAN, MAGENTA, YELLOW, WHITE, BLACK
 };
-myColor getRgb(int code)
-{   
+myColor getRgb(int code){   
     myColor color;
 	if (code == RED)
 	{
@@ -72,9 +73,12 @@ myColor getRgb(int code)
     }
     return color;
 }
-
-void init (void)
-{
+void searchAndTranslate();
+bool isInVicinity(scrPt p,scrPt p1){
+    if(abs(p.x-p1.x)<10 && abs(p.y-p1.y)<10)return true;
+    return false;
+}
+void init (void){
 glutInitDisplayMode (GLUT_SINGLE | GLUT_RGB);
 glutInitWindowPosition (100, 50);
 glutInitWindowSize (winW, winH);
@@ -193,7 +197,6 @@ void plotFilledRectangle(scrPt p1,scrPt p2){
     floodFill(x,y,currentColor);
     glFlush();
 }
-
 void plotCircle(scrPt p1,scrPt p2){
     int radius=sqrt((p1.x-p2.x)*(p1.x-p2.x)+(p1.y-p2.y)*(p1.y-p2.y));
     GLint p = 1 - radius;
@@ -236,8 +239,20 @@ GLint firstx=0;
 GLint firsty=0;
 GLint secondx=0;
 GLint secondy=0;
+
+GLint animeRectx1=0;
+GLint animeRecty1=0;
+GLint animeRectx2=0;
+GLint animeRecty2=0;
+
+GLint startAnimex=0;
+GLint startAnimey=0;
+GLint endAnimex=0;
+GLint endAnimey=0;
 int currentOption=-1;
 int cnt=0;
+
+//clipping
 int x_max;
 int y_max;
 int x_min;
@@ -313,9 +328,16 @@ void cohenSutherlandClip(double x1, double y1,double x2, double y2,vector<pair<d
              myLines.push_back({x2,y2});
     }
 }
+
 int dh=35;//top bar width
 vector<vector<bool>> topBar(winW+1,vector<bool>(dh+1,0));
+vector<pair<double,double>> inputPoints;
 vector<pair<double,double>> inputLines;
+vector<pair<double,double>> inputRect;
+vector<pair<double,double>> inputFilledRect;
+vector<pair<double,double>> inputCircle;
+vector<pair<double,double>> inputFilledCircle;
+
 bool isCreated=0;
 void createBar(){
     int objectNo=0;
@@ -476,6 +498,10 @@ int findObject(GLint x,GLint y){
     }
     return -1;
 }
+bool directionOfObject=1;
+void animate(){
+    glutTimerFunc(0,timer,0);
+}
 void onMouseClick (GLint button, GLint action, GLint xMouse, GLint yMouse){
     if(button == GLUT_LEFT_BUTTON && action == GLUT_DOWN){
         int object=findObject(xMouse,winH-yMouse);
@@ -493,6 +519,7 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==0){
     scrPt p;
     p.x=firstx;
     p.y=firsty;
+    inputPoints.push_back({p.x,p.y});
     plotPoint(p);
 }
 if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==1){
@@ -525,6 +552,8 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==2){
         scrPt p2;
         p2.x=xMouse;
         p2.y=winH-yMouse;
+        inputRect.push_back({p1.x,p1.y});
+        inputRect.push_back({p2.x,p2.y});
         plotRectangle(p1,p2);
         cnt=0;
     }
@@ -541,6 +570,8 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==3){
         scrPt p2;
         p2.x=xMouse;
         p2.y=winH-yMouse;
+        inputFilledRect.push_back({p1.x,p1.y});
+        inputFilledRect.push_back({p2.x,p2.y});
         plotFilledRectangle(p1,p2);
         cnt=0;
     }
@@ -557,6 +588,8 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==4){
         scrPt p2;
         p2.x=xMouse;
         p2.y=winH-yMouse;
+        inputCircle.push_back({p1.x,p1.y});
+        inputCircle.push_back({p2.x,p2.y});
         plotCircle(p1,p2);
         cnt=0;
     }
@@ -573,6 +606,8 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==5){
         scrPt p2;
         p2.x=xMouse;
         p2.y=winH-yMouse;
+        inputFilledCircle.push_back({p1.x,p1.y});
+        inputFilledCircle.push_back({p2.x,p2.y});
         plotFilledCircle(p1,p2);
         cnt=0;
     }
@@ -656,6 +691,44 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==9){
         cnt=0;
     }
 }
+if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==10){
+     if(cnt==0){
+         animeRectx1=xMouse;
+        animeRecty1=winH-yMouse;
+        startAnimex=animeRectx1;
+        startAnimey=animeRecty1;
+        cnt++;
+    }else if(cnt==1){
+        scrPt p1;
+        p1.x=animeRectx1;
+        p1.y=animeRecty1;
+        scrPt p2;
+        p2.x=xMouse;
+        p2.y=winH-yMouse;
+        animeRectx2=p2.x;
+        animeRecty2=p2.y;
+        plotRectangle(p1,p2);
+        cnt++;
+    }else{
+        endAnimex=xMouse;
+        endAnimey=winH-yMouse;
+        animate();
+    }
+}
+if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==11){
+    if(cnt==0){
+        firstx=xMouse;
+        firsty=winH-yMouse;
+        cnt++;
+    }else{
+        secondx=xMouse;
+        secondy=winH-yMouse;
+        searchAndTranslate();
+        glClear (GL_COLOR_BUFFER_BIT);
+        plotEverything();
+        cnt=0;
+    }
+}
 }
 void menuBarAction (GLint selectedOption){
     currentOption=selectedOption;
@@ -676,7 +749,7 @@ void thicknessSubMenu (GLint thicknessOption)
     glutPostRedisplay ( );
 }
 void createMenu(){
-    GLint sumMenu1,sumMenu2;
+    GLint sumMenu1,sumMenu2,subMenu3;
     sumMenu1 = glutCreateMenu (colorSubMenu);
     glutAddMenuEntry ("RED", RED);
     glutAddMenuEntry ("GREEN",GREEN);
@@ -708,12 +781,67 @@ void createMenu(){
     glutAddMenuEntry ("Boundary Fill", 7);
     glutAddMenuEntry ("Flood Fill", 8);
     glutAddMenuEntry ("Clipping", 9);
+    glutAddMenuEntry ("Animation",10);
+    glutAddMenuEntry ("Translation",11);
     glutAddSubMenu ("Color", sumMenu1);
     glutAddSubMenu ("Thickness", sumMenu2);
+
     glutAttachMenu (GLUT_RIGHT_BUTTON);
 }
 
 
+void onMouseMove(GLint xMouse, GLint yMouse){
+    if(currentOption==1 && cnt>0){
+        scrPt p1,p2;
+        p1.x=firstx;
+        p1.y=firsty;
+        p2.x=xMouse;
+        p2.y=winH-yMouse;
+        glClear (GL_COLOR_BUFFER_BIT);
+        plotEverything();
+        plotLine(p1,p2);
+    }
+    if(currentOption==2 && cnt>0){
+        scrPt p1,p2;
+        p1.x=firstx;
+        p1.y=firsty;
+        p2.x=xMouse;
+        p2.y=winH-yMouse;
+        glClear (GL_COLOR_BUFFER_BIT);
+        plotEverything();
+        plotRectangle(p1,p2);
+    }
+    if(currentOption==3 && cnt>0){
+        scrPt p1,p2;
+        p1.x=firstx;
+        p1.y=firsty;
+        p2.x=xMouse;
+        p2.y=winH-yMouse;
+        glClear (GL_COLOR_BUFFER_BIT);
+        plotEverything();
+        plotFilledRectangle(p1,p2);
+    }
+    if(currentOption==4 && cnt>0){
+        scrPt p1,p2;
+        p1.x=firstx;
+        p1.y=firsty;
+        p2.x=xMouse;
+        p2.y=winH-yMouse;
+        glClear (GL_COLOR_BUFFER_BIT);
+        plotEverything();
+        plotCircle(p1,p2);
+    }
+    if(currentOption==5 && cnt>0){
+        scrPt p1,p2;
+        p1.x=firstx;
+        p1.y=firsty;
+        p2.x=xMouse;
+        p2.y=winH-yMouse;
+        glClear (GL_COLOR_BUFFER_BIT);
+        plotEverything();
+        plotFilledCircle(p1,p2);
+    }
+}
 int main (int argc, char** argv)
 {
 glutInit (&argc, argv);
@@ -721,5 +849,192 @@ init ();
 createBar();
 createMenu();
 glutMouseFunc(onMouseClick);
+glutPassiveMotionFunc(onMouseMove);
 commit();
 }
+
+void timer(int){
+    glClear (GL_COLOR_BUFFER_BIT);
+    plotEverything();
+    if(directionOfObject && animeRectx1<endAnimex){
+        animeRectx1+=5;animeRectx2+=5;
+    }else if(directionOfObject)directionOfObject=!directionOfObject;
+    else if(!directionOfObject && animeRectx1>startAnimex){
+        animeRectx1-=5;animeRectx2-=5;
+    }else directionOfObject=!directionOfObject;
+    scrPt p1;
+    p1.x=animeRectx1;
+    p1.y=animeRecty1;
+    scrPt p2;
+    p2.x=animeRectx2;
+    p2.y=animeRecty2;
+    plotRectangle(p1,p2);
+    glutTimerFunc(1000/60,timer,0);
+}
+
+void plotEverything(){
+    createBar();
+    for(int i=0;i<inputPoints.size();i++){
+        setPixel(inputPoints[i].first,inputPoints[i].second);
+    }
+    for(int i=0;i<inputLines.size();i+=2){
+        scrPt p1,p2;
+        p1.x=inputLines[i].first;
+        p1.y=inputLines[i].second;
+        p2.x=inputLines[i+1].first;
+        p2.y=inputLines[i+1].second;
+        plotLine(p1,p2);
+    }
+    for(int i=0;i<inputRect.size();i+=2){
+        scrPt p1,p2;
+        p1.x=inputRect[i].first;
+        p1.y=inputRect[i].second;
+        p2.x=inputRect[i+1].first;
+        p2.y=inputRect[i+1].second;
+        plotRectangle(p1,p2);
+    }
+    for(int i=0;i<inputFilledRect.size();i+=2){
+        scrPt p1,p2;
+        p1.x=inputFilledRect[i].first;
+        p1.y=inputFilledRect[i].second;
+        p2.x=inputFilledRect[i+1].first;
+        p2.y=inputFilledRect[i+1].second;
+        plotFilledRectangle(p1,p2);
+    }
+    for(int i=0;i<inputCircle.size();i+=2){
+        scrPt p1,p2;
+        p1.x=inputCircle[i].first;
+        p1.y=inputCircle[i].second;
+        p2.x=inputCircle[i+1].first;
+        p2.y=inputCircle[i+1].second;
+        plotCircle(p1,p2);
+    }
+    for(int i=0;i<inputFilledCircle.size();i+=2){
+        scrPt p1,p2;
+        p1.x=inputFilledCircle[i].first;
+        p1.y=inputFilledCircle[i].second;
+        p2.x=inputFilledCircle[i+1].first;
+        p2.y=inputFilledCircle[i+1].second;
+        plotFilledCircle(p1,p2);
+    }
+    glFlush();
+}
+
+void searchAndTranslate(){
+    scrPt cursorPoint,lastPoint,tempPoint;
+    cursorPoint.x=firstx;
+    cursorPoint.y=firsty;
+    lastPoint.x=secondx;
+    lastPoint.y=secondy;
+    for(int i=0;i<inputPoints.size();i++){
+            tempPoint.x=inputPoints[i].first;
+            tempPoint.y=inputPoints[i].second;
+            if(isInVicinity(cursorPoint,tempPoint)){
+                inputPoints[i].first=lastPoint.x;
+                inputPoints[i].second=lastPoint.y;
+                return;
+            }
+    }
+    for(int i=0;i<inputLines.size();i+=2){
+        tempPoint.x=inputLines[i].first;
+        tempPoint.y=inputLines[i].second;
+        if(isInVicinity(cursorPoint,tempPoint)){
+                inputLines[i+1].first+=(lastPoint.x-inputLines[i].first);
+                inputLines[i+1].second+=(lastPoint.y-inputLines[i].second);
+                inputLines[i].first=lastPoint.x;
+                inputLines[i].second=lastPoint.y;
+                return;
+        }
+         tempPoint.x=inputLines[i+1].first;
+        tempPoint.y=inputLines[i+1].second;
+          if(isInVicinity(cursorPoint,tempPoint)){
+                inputLines[i].first+=(lastPoint.x-inputLines[i+1].first);
+                inputLines[i].second+=(lastPoint.y-inputLines[i+1].second);
+                inputLines[i+1].first=lastPoint.x;
+                inputLines[i+1].second=lastPoint.y;
+                return;
+        }
+    }
+    for(int i=0;i<inputRect.size();i+=2){
+        tempPoint.x=inputRect[i].first;
+        tempPoint.y=inputRect[i].second;
+        if(isInVicinity(cursorPoint,tempPoint)){
+                inputRect[i+1].first+=(lastPoint.x-inputRect[i].first);
+                inputRect[i+1].second+=(lastPoint.y-inputRect[i].second);
+                inputRect[i].first=lastPoint.x;
+                inputRect[i].second=lastPoint.y;
+                return;
+        }
+        tempPoint.x=inputRect[i+1].first;
+        tempPoint.y=inputRect[i+1].second;
+          if(isInVicinity(cursorPoint,tempPoint)){
+                inputRect[i].first+=(lastPoint.x-inputRect[i+1].first);
+                inputRect[i].second+=(lastPoint.y-inputRect[i+1].second);
+                inputRect[i+1].first=lastPoint.x;
+                inputRect[i+1].second=lastPoint.y;
+                return;
+        }
+    }
+    for(int i=0;i<inputFilledRect.size();i+=2){
+        tempPoint.x=inputFilledRect[i].first;
+        tempPoint.y=inputFilledRect[i].second;
+        if(isInVicinity(cursorPoint,tempPoint)){
+                inputFilledRect[i+1].first+=(lastPoint.x-inputFilledRect[i].first);
+                inputFilledRect[i+1].second+=(lastPoint.y-inputFilledRect[i].second);
+                inputFilledRect[i].first=lastPoint.x;
+                inputFilledRect[i].second=lastPoint.y;
+                return;
+        }
+         tempPoint.x=inputFilledRect[i+1].first;
+        tempPoint.y=inputFilledRect[i+1].second;
+          if(isInVicinity(cursorPoint,tempPoint)){
+                inputFilledRect[i].first+=(lastPoint.x-inputFilledRect[i+1].first);
+                inputFilledRect[i].second+=(lastPoint.y-inputFilledRect[i+1].second);
+                inputFilledRect[i+1].first=lastPoint.x;
+                inputFilledRect[i+1].second=lastPoint.y;
+                return;
+        }
+    }
+    for(int i=0;i<inputCircle.size();i+=2){
+        tempPoint.x=inputCircle[i].first;
+        tempPoint.y=inputCircle[i].second;
+        if(isInVicinity(cursorPoint,tempPoint)){
+                inputCircle[i+1].first+=(lastPoint.x-inputCircle[i].first);
+                inputCircle[i+1].second+=(lastPoint.y-inputCircle[i].second);
+                inputCircle[i].first=lastPoint.x;
+                inputCircle[i].second=lastPoint.y;
+                return;
+        }
+         tempPoint.x=inputCircle[i+1].first;
+        tempPoint.y=inputCircle[i+1].second;
+          if(isInVicinity(cursorPoint,tempPoint)){
+                inputCircle[i].first+=(lastPoint.x-inputCircle[i+1].first);
+                inputCircle[i].second+=(lastPoint.y-inputCircle[i+1].second);
+                inputCircle[i+1].first=lastPoint.x;
+                inputCircle[i+1].second=lastPoint.y;
+                return;
+        }
+    }
+    for(int i=0;i<inputFilledCircle.size();i+=2){
+        tempPoint.x=inputFilledCircle[i].first;
+        tempPoint.y=inputFilledCircle[i].second;
+        if(isInVicinity(cursorPoint,tempPoint)){
+                inputFilledCircle[i+1].first+=(lastPoint.x-inputFilledCircle[i].first);
+                inputFilledCircle[i+1].second+=(lastPoint.y-inputFilledCircle[i].second);
+                inputFilledCircle[i].first=lastPoint.x;
+                inputFilledCircle[i].second=lastPoint.y;
+                return;
+        }
+         tempPoint.x=inputFilledCircle[i+1].first;
+        tempPoint.y=inputFilledCircle[i+1].second;
+          if(isInVicinity(cursorPoint,tempPoint)){
+                inputFilledCircle[i].first+=(lastPoint.x-inputFilledCircle[i+1].first);
+                inputFilledCircle[i].second+=(lastPoint.y-inputFilledCircle[i+1].second);
+                inputFilledCircle[i+1].first=lastPoint.x;
+                inputFilledCircle[i+1].second=lastPoint.y;
+                return;
+        }
+    }
+
+}
+    

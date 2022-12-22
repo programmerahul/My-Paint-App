@@ -2,6 +2,8 @@
 #include<cmath>
 #include<iostream>
 #include<vector>
+ #define STB_IMAGE_WRITE_IMPLEMENTATION
+#include"toPng.h"
 using namespace std;
 void timer(int);
 const GLint winW=1200,winH=700;
@@ -502,6 +504,20 @@ bool directionOfObject=1;
 void animate(){
     glutTimerFunc(0,timer,0);
 }
+void saveImage(char* filepath) {
+ int width=winW, height=winH-dh;
+ GLsizei nrChannels = 3;
+ GLsizei stride = nrChannels * width;
+ stride += (stride % 4) ? (4 - stride % 4) : 0;
+ GLsizei bufferSize = stride * height;
+ std::vector<char> buffer(bufferSize);
+ glPixelStorei(GL_PACK_ALIGNMENT, 4);
+ glReadBuffer(GL_FRONT);
+ glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer.data());
+ stbi_flip_vertically_on_write(true);
+ stbi_write_png(filepath, width, height, nrChannels, buffer.data(), stride);
+}
+int DrawingNumber=0;
 void onMouseClick (GLint button, GLint action, GLint xMouse, GLint yMouse){
     if(button == GLUT_LEFT_BUTTON && action == GLUT_DOWN){
         int object=findObject(xMouse,winH-yMouse);
@@ -731,6 +747,11 @@ if (button == GLUT_LEFT_BUTTON && action == GLUT_DOWN && currentOption==11){
 }
 }
 void menuBarAction (GLint selectedOption){
+    if(selectedOption==12){
+        char filePath[]="MyDrawing.png";
+        saveImage(filePath);
+        return;
+    }
     currentOption=selectedOption;
     cnt=0;
     glutPostRedisplay ();
@@ -783,6 +804,7 @@ void createMenu(){
     glutAddMenuEntry ("Clipping", 9);
     glutAddMenuEntry ("Animation",10);
     glutAddMenuEntry ("Translation",11);
+    glutAddMenuEntry ("Save",12);
     glutAddSubMenu ("Color", sumMenu1);
     glutAddSubMenu ("Thickness", sumMenu2);
 
@@ -842,6 +864,7 @@ void onMouseMove(GLint xMouse, GLint yMouse){
         plotFilledCircle(p1,p2);
     }
 }
+
 int main (int argc, char** argv)
 {
 glutInit (&argc, argv);

@@ -1,15 +1,20 @@
-#This is a paint app using C++ and OpenGL  
-#Libraries: -lGL -lGLU -lGLEW -lglut  
-#To setup in vscode:  
-#choose terminal>config_default_build_task>c++>   
-#under "args" add these 4 libraries name  
+This is a paint app using C++ and OpenGL.  
+You can make shapes,add animation and   
+use features like translation,  
+save painting as png format.  
   
+  
+Libraries: -lGL -lGLU -lGLEW -lglut  
+To setup in vscode:  
+choose terminal>config_default_build_task>c++>   
+under "args" add these 4 libraries name  
+
    
-#To run main (not main.cpp but main executable)  
-#Download main (executable)  
-#inside termial write :  
-#chmod u+x main  
-#./main  
+To run main executable  
+Download main (executable)  
+inside termial write :  
+chmod u+x main  
+./main  
   
 ![Screenshot from 2022-11-07 22-26-21](https://user-images.githubusercontent.com/84563516/200371546-5a9e4c1f-b01b-42ab-beae-d53a89f59c76.png)
   
